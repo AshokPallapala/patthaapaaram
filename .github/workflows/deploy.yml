@@ -23,7 +23,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # Keep this for clarity; actual install is done by the peaceiris action below
       HUGO_VERSION: 0.141.0
     steps:
       - name: Checkout
@@ -35,7 +34,7 @@ jobs:
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
-          hugo-version: '0.141.0'   # adjust to theme-required Hugo version if different
+          hugo-version: '0.141.0'
           extended: true
 
       - name: Verify Hugo version
@@ -53,7 +52,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Prefer reproducible 'npm ci' when a lockfile exists, else fall back to 'npm install'
           if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
             npm ci
           else
@@ -61,43 +59,13 @@ jobs:
           fi
 
       - name: Fetch and vendor Hugo modules
-        # Ensures Hugo's modules (partials/layouts) are available in CI and avoids remote fetch failures
         run: |
           hugo mod get -u all || true
           hugo mod vendor || true
-        # Optionally, add caches for Hugo modules in the future if desired
 
       - name: Debug: show theme/module info (temporary)
-        # Useful to debug missing partials or template errors in CI logs; remove once stable
         run: |
           echo "doks-core package.json (if present):"
           cat node_modules/@thulite/doks-core/package.json || true
           echo "List partials matching head/head.html (if present):"
-          find . -type f -path "*partials/head/head.html" -print || true
-          echo "Search for 'try(' usages in doks-core templates:"
-          grep -nR "try(" node_modules/@thulite/doks-core || true
-
-      - name: Build production website
-        env:
-          HUGO_ENVIRONMENT: production
-          HUGO_ENV: production
-          TZ: America/Los_Angeles
-        run: |
-          # If your npm build script runs Hugo, keep it. Otherwise run hugo directly.
-          npm run build -- --baseURL "${{ steps.pages.outputs.base_url }}/"
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          find . -type f -path "*pa*

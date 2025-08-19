@@ -68,4 +68,30 @@ jobs:
           echo "doks-core package.json (if present):"
           cat node_modules/@thulite/doks-core/package.json || true
           echo "List partials matching head/head.html (if present):"
-          find . -type f -path "*pa*
+          find . -type f -path "*partials/head/head.html" -print || true
+          echo "Search for 'try(' usages in doks-core templates:"
+          grep -nR "try(" node_modules/@thulite/doks-core || true
+
+      - name: Build production website
+        env:
+          HUGO_ENVIRONMENT: production
+          HUGO_ENV: production
+          TZ: America/Los_Angeles
+        run: |
+          npm run build -- --baseURL "${{ steps.pages.outputs.base_url }}/"
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
